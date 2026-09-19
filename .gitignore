@@ -117,3 +117,11 @@ company_research/*.json
 
 # Brainstorm mockups (superpowers visual companion) - never ship
 .superpowers/
+
+
+# C6 private career command centre runtime
+.career-private/
+career_private/
+**/career_private/
+portal/.career-private/
+.env.career
