@@ -37,6 +37,36 @@ Sixty-nine tailored applications, twenty first interviews, and one signed contra
   </a>
 </p>
 
+## C6 private career mode
+
+This repository can run as the private C6 Career Command Centre at `jobs.c6group.co.za`.
+
+The C6 mode is **Arsenal-first** and follows the C6 operating loop:
+
+**FORENSICS → ARSENAL MATCH → REUSE → COMPOSE → EXTEND → BUILD ONLY WHAT IS MISSING**
+
+Career missions follow:
+
+**AUDIT → EVIDENCE → DIAGNOSE → RECOMMEND → SELECT → EXECUTE → MEASURE → RE-AUDIT → PROVE**
+
+The upstream workflow remains the career engine. The C6 portal, private data boundary, Win Ledger and service adapters sit around it.
+
+### C6 service boundaries
+
+- Transactional mail: **C6-Mail-Services** via `POST /api/v1/mail/send` and `X-C6-Mail-Key`.
+- Workflow automation: C6 Arsenal providers such as n8n / DIESEL CONNECT.
+- Scheduling: Cal.com.
+- Knowledge/context: Context-Hub / OpenViking.
+- Multi-agent execution: C6 Arsenal providers.
+- Web research/scraping: C6 Arsenal browser/scraping providers.
+- Personal career data: private runtime storage, never tracked in this public repository.
+
+Gmail and Notion are not architectural dependencies of C6 mode. Their inherited upstream commands remain legacy adapters until replaced by an approved C6 capability.
+
+### Private portal
+
+See `portal/README.md`, `docs/C6_SOP_SOMS_CAREER_OPERATING_MODEL.md`, and `Dockerfile.career`.
+
 ## What this is
 
 A structured workflow that turns Claude Code into a full-stack job application assistant. The core workflow (self-profiling, fit evaluation, and the drafter-reviewer application pipeline) is **language- and country-agnostic**. The job portal search skills are built for the Danish market (Jobindex, Jobnet, Akademikernes Jobbank, etc.), but the pattern is designed to be swapped for your local job boards.
