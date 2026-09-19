@@ -3,6 +3,7 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Any
+from .tracker import summary as tracker_summary
 
 
 class CareerStore:
@@ -42,4 +43,5 @@ class CareerStore:
             "missions": self.read_json("missions.json", []),
             "wins": self.read_json("win-ledger.json", []),
             "settings": self.read_json("settings.json", {}),
+            "tracker": tracker_summary(),
         }
