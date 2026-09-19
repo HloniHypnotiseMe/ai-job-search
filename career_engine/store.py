@@ -28,7 +28,7 @@ class CareerStore:
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
                 json.dump(value, handle, indent=2, ensure_ascii=False)
-                handle.write("\\n")
+                handle.write("\n")
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temp_name, path)
