@@ -3,11 +3,22 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Any
-from .tracker import summary as tracker_summary
 
 
 class CareerStore:
-    """Private, filesystem-backed career state; the repository contains no personal data."""
+    """Private filesystem-backed career state. Personal data never belongs in Git."""
+
+    COLLECTIONS = {
+        "profile": "profile.json",
+        "opportunities": "opportunities.json",
+        "applications": "applications.json",
+        "interviews": "interviews.json",
+        "followups": "followups.json",
+        "skill_gaps": "skill-gaps.json",
+        "wins": "win-ledger.json",
+        "missions": "missions.json",
+        "settings": "settings.json",
+    }
 
     def __init__(self, root: str | None = None):
         self.root = Path(root or os.getenv("CAREER_DATA_DIR", "./.career-private")).expanduser().resolve()
@@ -37,11 +48,37 @@ class CareerStore:
             if os.path.exists(temp_name):
                 os.unlink(temp_name)
 
+    def collection(self, key: str, default: Any = None) -> Any:
+        name = self.COLLECTIONS[key]
+        return self.read_json(name, [] if default is None else default)
+
+    def put_collection(self, key: str, value: Any) -> None:
+        self.write_json(self.COLLECTIONS[key], value)
+
     def dashboard(self) -> dict[str, Any]:
+        opportunities = self.collection("opportunities", [])
+        applications = self.collection("applications", [])
+        interviews = self.collection("interviews", [])
+        followups = self.collection("followups", [])
+        skill_gaps = self.collection("skill_gaps", [])
+        missions = self.collection("missions", [])
+        wins = self.collection("wins", [])
         return {
-            "profile": self.read_json("profile.json", {}),
-            "missions": self.read_json("missions.json", []),
-            "wins": self.read_json("win-ledger.json", []),
-            "settings": self.read_json("settings.json", {}),
-            "tracker": tracker_summary(),
+            "profile": self.collection("profile", {}),
+            "opportunities": opportunities,
+            "applications": applications,
+            "interviews": interviews,
+            "followups": followups,
+            "skill_gaps": skill_gaps,
+            "missions": missions,
+            "wins": wins,
+            "summary": {
+                "opportunities": len(opportunities),
+                "applications": len(applications),
+                "interviews": len(interviews),
+                "followups": len(followups),
+                "skill_gaps": len(skill_gaps),
+                "active_missions": sum(1 for x in missions if x.get("status") == "ACTIVE"),
+                "proven_wins": len(wins),
+            },
         }
