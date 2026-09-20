@@ -14,6 +14,17 @@ class ApplicationFactoryTests(unittest.TestCase):
         p=record_artifact(p,"cv","cv-v1",evidence=["AI Engineer"])
         self.assertEqual(p["artifacts"]["cv"]["version"],"cv-v1")
         self.assertEqual(p["artifacts"]["cv"]["status"],"READY")
+    def test_service_creates_plan_only_after_assessment(self):
+        from career_engine.service import CareerService
+        from career_engine.store import CareerStore
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            s=CareerService(CareerStore(tmp)); s.save_profile(self.profile)
+            o=s.add_opportunity(dict(self.opportunity, status="ASSESSED"))
+            p=s.create_application_plan(o["id"])
+            self.assertEqual(p["status"],"PLANNED")
+            self.assertEqual(s.applications()[0]["opportunity_id"],o["id"])
+
     def test_submission_requires_explicit_approval(self):
         p=create_application_plan(self.opportunity,self.profile)
         p=approve_submission(p,{"cv":"cv-v1","cover_letter":"cl-v1","ats_check":"ats-v1"})
