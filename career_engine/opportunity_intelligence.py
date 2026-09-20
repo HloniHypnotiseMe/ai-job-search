@@ -12,7 +12,7 @@ def _text(value: Any) -> str:
     return str(value)
 
 def _tokens(text: str) -> set[str]:
-    return {x for x in re.findall(r"[a-zA-Z][a-zA-Z0-9+#.-]{1,}",text.lower()) if x not in STOP and len(x)>2}
+    return {x for x in re.findall(r"[a-zA-Z][a-zA-Z0-9+#.-]{1,}",text.lower()) if x not in STOP and len(x)>1}
 
 def _evidence(profile: dict[str,Any]) -> dict[str,list[str]]:
     out={}
