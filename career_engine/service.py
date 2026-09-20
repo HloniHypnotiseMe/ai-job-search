@@ -2,6 +2,7 @@ import uuid
 from typing import Any
 
 from .contracts import Mission
+from .opportunity_intelligence import assess_opportunity
 from .sop_soms import advance, capture_proof, close_with_win, acceptance_record
 from .store import CareerStore
 
@@ -88,6 +89,21 @@ class CareerService:
 
     def skill_gaps(self) -> list[dict[str, Any]]:
         return self.store.collection("skill_gaps", [])
+
+    def assess_opportunity(self, opportunity_id: str) -> dict[str, Any]:
+        rows = self.opportunities()
+        profile = self.profile()
+        for row in rows:
+            if row["id"] == opportunity_id:
+                assessment = assess_opportunity(row, profile)
+                updated = dict(row)
+                updated["assessment"] = assessment
+                updated["status"] = "ASSESSED"
+                self.store.put_collection("opportunities", [
+                    updated if x["id"] == opportunity_id else x for x in rows
+                ])
+                return assessment
+        raise KeyError(opportunity_id)
 
     def add_opportunity(self, payload: dict[str, Any]) -> dict[str, Any]:
         required = ("title", "company", "source_url")
