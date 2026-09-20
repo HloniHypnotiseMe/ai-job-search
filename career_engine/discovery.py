@@ -3,15 +3,14 @@ import json
 from pathlib import Path
 from typing import Any
 
-from career_engine.adapters.job_ops import normalize_jobs
+from career_engine.adapters.job_ops import load_export
 from career_engine.service import CareerService
 from career_engine.store import CareerStore
 
 
 def ingest_jobops_export(path: str, service: CareerService) -> dict[str, int]:
     """Import a JobOps export into private opportunities without duplicating postings."""
-    raw = json.loads(Path(path).read_text(encoding="utf-8"))
-    jobs = normalize_jobs(raw)
+    jobs = load_export(path)
     existing = service.opportunities()
     keys = {str(row.get("canonical_key", "")).strip() for row in existing if row.get("canonical_key")}
     urls = {str(row.get("source_url", "")).strip() for row in existing if row.get("source_url")}
