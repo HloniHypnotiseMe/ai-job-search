@@ -3,6 +3,7 @@ from typing import Any
 
 from .contracts import Mission
 from .opportunity_intelligence import assess_opportunity
+from .application_factory import create_application_plan
 from .sop_soms import advance, capture_proof, close_with_win, acceptance_record
 from .store import CareerStore
 
@@ -111,6 +112,20 @@ class CareerService:
             raise ValueError("title, company and source_url are required")
         payload.setdefault("status", "NEW")
         return self._add("opportunities", payload)
+
+    def create_application_plan(self, opportunity_id: str) -> dict[str, Any]:
+        for opportunity in self.opportunities():
+            if opportunity["id"] == opportunity_id:
+                if opportunity.get("status") not in ("ASSESSED", "QUALIFIED"):
+                    raise ValueError("opportunity must be assessed before creating an application plan")
+                plan = create_application_plan(opportunity, self.profile(), opportunity.get("assessment"))
+                self._add("applications", {
+                    "id": plan["id"], "opportunity_id": opportunity_id,
+                    "company": plan["company"], "role": plan["role"],
+                    "status": plan["status"], "plan": plan,
+                })
+                return plan
+        raise KeyError(opportunity_id)
 
     def add_application(self, payload: dict[str, Any]) -> dict[str, Any]:
         required = ("opportunity_id", "company", "role")
