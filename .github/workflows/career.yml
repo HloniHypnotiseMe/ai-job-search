@@ -29,4 +29,4 @@ jobs:
       - name: Compile Python
         run: python -m compileall career_engine portal tests tools/hash_career_password.py
       - name: Run career tests
-        run: python -m unittest tests.test_career_engine tests.test_portal tests.test_tracker tests.test_adapters tests.test_career_end_state tests.test_application_factory tests.test_artifact_factory tests.test_interview_command
+        run: python -m unittest tests.test_career_engine tests.test_portal tests.test_tracker tests.test_adapters tests.test_career_end_state tests.test_application_factory tests.test_artifact_factory tests.test_interview_command tests.test_career_intelligence
