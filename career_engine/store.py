@@ -18,6 +18,7 @@ class CareerStore:
         "wins": "win-ledger.json",
         "missions": "missions.json",
         "settings": "settings.json",
+        "mail_signals": "mail-signals.json",
     }
 
     def __init__(self, root: str | None = None):

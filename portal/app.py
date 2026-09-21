@@ -15,6 +15,7 @@ PORT = int(os.getenv("CAREER_PORTAL_PORT", "8787"))
 USERNAME = os.getenv("CAREER_PORTAL_USERNAME", "")
 PASSWORD_HASH = os.getenv("CAREER_PORTAL_PASSWORD_HASH", "")
 COOKIE_SECRET = os.getenv("CAREER_PORTAL_COOKIE_SECRET", "")
+MAIL_WEBHOOK_SECRET = os.getenv("CAREER_MAIL_WEBHOOK_SECRET", "")
 
 
 def password_hash(password, salt=None):
@@ -132,6 +133,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, CareerService().profile())
         if path == "/api/missions":
             return self.send_json(200, {"missions": CareerService().missions()})
+        if path == "/api/intelligence":
+            return self.send_json(200, CareerService().career_intelligence())
+        if path == "/api/discovery-sources":
+            return self.send_json(200, CareerService().discovery_sources())
         return self.send_json(404, {"error": "not_found"})
 
     def _json_body(self):
@@ -154,6 +159,21 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
             return self.send_page(LOGIN, 401)
+
+        if path == "/api/mail/webhook":
+            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            signature = self.headers.get("X-C6-Event-Signature", "")
+            expected = hmac.new(MAIL_WEBHOOK_SECRET.encode(), raw, hashlib.sha256).hexdigest() if MAIL_WEBHOOK_SECRET else ""
+            if not MAIL_WEBHOOK_SECRET or not signature or not hmac.compare_digest(signature, expected):
+                return self.send_json(401, {"error": "invalid_mail_webhook_signature"})
+            try:
+                data = json.loads(raw or b"{}")
+            except json.JSONDecodeError:
+                return self.send_json(400, {"error": "invalid_json"})
+            event_data = data.get("data") or {}
+            payload = event_data.get("payload") if isinstance(event_data, dict) else {}
+            message = payload if isinstance(payload, dict) else {}
+            return self.send_json(202, CareerService().propose_mail_signal(message))
 
         if not self._require_auth():
             return
@@ -182,6 +202,14 @@ class Handler(BaseHTTPRequestHandler):
                 result = service.submit_application(data["application_id"], data["channel"], data["confirmation_reference"])
             elif path == "/api/interviews/prepare":
                 result = service.prepare_interview(data["application_id"], data["stage"])
+            elif path == "/api/applications/outcome":
+                result = service.record_application_outcome(data["application_id"], data["outcome"])
+            elif path == "/api/interviews/outcome":
+                result = service.record_interview_outcome(data["interview_id"], data["outcome"])
+            elif path == "/api/mail/signals":
+                result = service.propose_mail_signal(data)
+            elif path == "/api/discovery/ingest":
+                result = service.ingest_discovery_records(data["records"], data["source"])
             elif fn:
                 result = fn(data)
             else:
