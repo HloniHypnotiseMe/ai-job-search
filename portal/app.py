@@ -132,6 +132,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json(200, CareerService().profile())
         if path == "/api/missions":
             return self.send_json(200, {"missions": CareerService().missions()})
+        if path == "/api/intelligence":
+            return self.send_json(200, CareerService().career_intelligence())
+        if path == "/api/discovery-sources":
+            return self.send_json(200, CareerService().discovery_sources())
         return self.send_json(404, {"error": "not_found"})
 
     def _json_body(self):
@@ -182,6 +186,14 @@ class Handler(BaseHTTPRequestHandler):
                 result = service.submit_application(data["application_id"], data["channel"], data["confirmation_reference"])
             elif path == "/api/interviews/prepare":
                 result = service.prepare_interview(data["application_id"], data["stage"])
+            elif path == "/api/applications/outcome":
+                result = service.record_application_outcome(data["application_id"], data["outcome"])
+            elif path == "/api/interviews/outcome":
+                result = service.record_interview_outcome(data["interview_id"], data["outcome"])
+            elif path == "/api/mail/signals":
+                result = service.propose_mail_signal(data)
+            elif path == "/api/discovery/ingest":
+                result = service.ingest_discovery_records(data["records"], data["source"])
             elif fn:
                 result = fn(data)
             else:
