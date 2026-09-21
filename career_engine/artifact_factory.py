@@ -120,7 +120,7 @@ def render_cover_letter(opportunity:dict[str,Any],profile:dict[str,Any])->str:
 \\pagestyle{{fancy}}\\fancyhf{{}}
 \\rfoot{{Page \\thepage}}\\thispagestyle{{empty}}\\renewcommand{{\\headrulewidth}}{{0pt}}
 \\begin{{document}}
-\\namesection{{}}{{\\Huge{{{name}}}}{{ {email} | {phone} }}}
+\\namesection{{}}{{\\Huge{{{name}}}}}{{ {email} | {phone} }}}
 \\currentdate{{\\today}}
 \\lettercontent{{Dear Hiring Manager,}}
 \\lettercontent{{I am applying for the {role} position at {company}. {summary}}}
