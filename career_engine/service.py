@@ -4,6 +4,8 @@ from typing import Any
 from .contracts import Mission
 from .opportunity_intelligence import assess_opportunity
 from .application_factory import create_application_plan
+from .artifact_factory import ApplicationArtifactService
+from .interview_command import build_interview_prep
 from .sop_soms import advance, capture_proof, close_with_win, acceptance_record
 from .store import CareerStore
 
@@ -126,6 +128,27 @@ class CareerService:
                 })
                 return plan
         raise KeyError(opportunity_id)
+
+    def generate_application_artifacts(self, application_id: str) -> dict[str, Any]:
+        return ApplicationArtifactService(self.store).generate(application_id)
+
+    def finalize_application(self, application_id: str) -> dict[str, Any]:
+        return ApplicationArtifactService(self.store).finalize(application_id)
+
+    def submit_application(self, application_id: str, channel: str, confirmation_reference: str) -> dict[str, Any]:
+        return ApplicationArtifactService(self.store).submit(application_id, channel, confirmation_reference)
+
+    def prepare_interview(self, application_id: str, stage: str) -> dict[str, Any]:
+        apps = self.applications()
+        app = next((x for x in apps if x.get("id") == application_id), None)
+        if not app:
+            raise KeyError(application_id)
+        opp = next((x for x in self.opportunities() if x.get("id") == app.get("opportunity_id")), None)
+        if not opp:
+            raise KeyError(app.get("opportunity_id"))
+        prep = build_interview_prep(app, opp, self.profile(), stage)
+        self.store.put_collection("interviews", self.interviews() + [prep])
+        return prep
 
     def add_application(self, payload: dict[str, Any]) -> dict[str, Any]:
         required = ("opportunity_id", "company", "role")

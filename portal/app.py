@@ -171,10 +171,21 @@ class Handler(BaseHTTPRequestHandler):
             "/api/skill-gaps": service.add_skill_gap,
         }
         fn = routes.get(path)
-        if not fn:
-            return self.send_json(404, {"error": "not_found"})
         try:
-            result = fn(data["objective"]) if path == "/api/missions" else fn(data)
+            if path == "/api/missions":
+                result = fn(data["objective"])
+            elif path == "/api/applications/generate":
+                result = service.generate_application_artifacts(data["application_id"])
+            elif path == "/api/applications/finalize":
+                result = service.finalize_application(data["application_id"])
+            elif path == "/api/applications/submit":
+                result = service.submit_application(data["application_id"], data["channel"], data["confirmation_reference"])
+            elif path == "/api/interviews/prepare":
+                result = service.prepare_interview(data["application_id"], data["stage"])
+            elif fn:
+                result = fn(data)
+            else:
+                return self.send_json(404, {"error": "not_found"})
         except (KeyError, ValueError) as exc:
             return self.send_json(400, {"error": str(exc)})
         return self.send_json(201, result)
