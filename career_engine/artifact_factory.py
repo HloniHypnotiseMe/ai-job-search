@@ -114,26 +114,29 @@ def render_cover_letter(opportunity:dict[str,Any],profile:dict[str,Any])->str:
     phone=latex(contact.get("phone") or profile.get("phone",""))
     summary=latex(_first(profile,"summary","profile_statement") or "My background provides evidence-backed experience relevant to this role.")
     exp=_items(profile,("experience","projects"))
-    bullets="\n".join(f"    \\item \\textbf{{Evidence:}} {latex(x)}" for x in exp[:3])
-    return f"""\\documentclass[]{{cover}}
-\\usepackage{{fancyhdr}}
-\\pagestyle{{fancy}}\\fancyhf{{}}
-\\rfoot{{Page \\thepage}}\\thispagestyle{{empty}}\\renewcommand{{\\headrulewidth}}{{0pt}}
-\\begin{{document}}
-\\namesection{{}}{{\\Huge{{{name}}}}}{{ {email} | {phone} }}}
-\\currentdate{{\\today}}
-\\lettercontent{{Dear Hiring Manager,}}
-\\lettercontent{{I am applying for the {role} position at {company}. {summary}}}
-\\lettercontent{{The strongest evidence I would bring to this role includes:}}
-{{\\raggedright\\fontspec[Path = OpenFonts/fonts/raleway/]{{Raleway-Medium}}\\fontsize{{11pt}}{{13pt}}\\selectfont
-\\begin{{itemize}}
-{bullets}
-\\end{{itemize}}\\par}}
-\\lettercontent{{I have kept this application grounded in the evidence available in my private candidate record. I would welcome the opportunity to discuss how that experience maps to the requirements of the role.}}
-\\lettercontent{{I look forward to hearing from you.}}
-\\begin{{flushright}}\\closing{{Kind regards,}}\\signature{{{name}}}\\end{{flushright}}
-\\end{{document}}
+    bullets="\\n".join("    \\item \\textbf{Evidence:} "+latex(x) for x in exp[:3])
+    template=r"""\\documentclass[]{cover}
+\\usepackage{fancyhdr}
+\\pagestyle{fancy}\\fancyhf{}
+\\rfoot{Page \\thepage}\\thispagestyle{empty}\\renewcommand{\\headrulewidth}{0pt}
+\\begin{document}
+\\namesection{}{\\Huge{__NAME__}}{ __EMAIL__ | __PHONE__ }
+\\currentdate{\\today}
+\\lettercontent{Dear Hiring Manager,}
+\\lettercontent{I am applying for the __ROLE__ position at __COMPANY__. __SUMMARY__}
+\\lettercontent{The strongest evidence I would bring to this role includes:}
+{\\raggedright\\fontspec[Path = OpenFonts/fonts/raleway/]{Raleway-Medium}\\fontsize{11pt}{13pt}\\selectfont
+\\begin{itemize}
+__BULLETS__
+\\end{itemize}\\par}
+\\lettercontent{I have kept this application grounded in the evidence available in my private candidate record. I would welcome the opportunity to discuss how that experience maps to the requirements of the role.}
+\\lettercontent{I look forward to hearing from you.}
+\\begin{flushright}\\closing{Kind regards,}\\signature{__NAME__}\\end{flushright}
+\\end{document}
 """
+    return (template.replace("__NAME__",name).replace("__EMAIL__",email).replace("__PHONE__",phone)
+            .replace("__ROLE__",role).replace("__COMPANY__",company).replace("__SUMMARY__",summary)
+            .replace("__BULLETS__",bullets))
 
 def _tokens(text:str)->set[str]:
     return {x for x in re.findall(r"[a-zA-Z][a-zA-Z0-9+#.-]{1,}",text.lower()) if x not in STOP}
