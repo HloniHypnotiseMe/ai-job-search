@@ -6,6 +6,10 @@ from .opportunity_intelligence import assess_opportunity
 from .application_factory import create_application_plan
 from .artifact_factory import ApplicationArtifactService
 from .interview_command import build_interview_prep
+from .outcomes import record_application_outcome, record_interview_outcome
+from .intelligence import build_career_intelligence
+from .discovery_sources import ingest_records, source_registry
+from .mail_intelligence import propose_update
 from .sop_soms import advance, capture_proof, close_with_win, acceptance_record
 from .store import CareerStore
 
@@ -107,6 +111,48 @@ class CareerService:
                 ])
                 return assessment
         raise KeyError(opportunity_id)
+
+    def career_intelligence(self) -> dict[str, Any]:
+        return build_career_intelligence(self.store)
+
+    def discovery_sources(self) -> dict[str, dict[str, Any]]:
+        return source_registry()
+
+    def ingest_discovery_records(self, records: list[dict[str, Any]], source: str) -> dict[str, Any]:
+        rows, stats = ingest_records(records, source, self.opportunities())
+        self.store.put_collection("opportunities", rows)
+        return {"stats": stats, "opportunities": rows}
+
+    def propose_mail_signal(self, message: dict[str, Any]) -> dict[str, Any]:
+        proposal = propose_update(message, self.applications())
+        proposals = self.store.collection("mail_signals", [])
+        proposal["id"] = uuid.uuid4().hex
+        proposals.append(proposal)
+        self.store.put_collection("mail_signals", proposals)
+        return proposal
+
+    def record_application_outcome(self, application_id: str, outcome: dict[str, Any]) -> dict[str, Any]:
+        rows = self.applications()
+        for row in rows:
+            if row.get("id") == application_id:
+                updated = record_application_outcome(row, outcome)
+                self.store.put_collection("applications", [updated if x.get("id") == application_id else x for x in rows])
+                wins = self.store.collection("wins", [])
+                wins.append({"target": f"Capture outcome for {updated.get('company','')} / {updated.get('role','')}",
+                              "proof": [f"Outcome: {outcome.get('status')}"],
+                              "next_win": "Extract the lesson and apply it to the next opportunity."})
+                self.store.put_collection("wins", wins)
+                return updated
+        raise KeyError(application_id)
+
+    def record_interview_outcome(self, interview_id: str, outcome: dict[str, Any]) -> dict[str, Any]:
+        rows = self.interviews()
+        for row in rows:
+            if row.get("id") == interview_id:
+                updated = record_interview_outcome(row, outcome)
+                self.store.put_collection("interviews", [updated if x.get("id") == interview_id else x for x in rows])
+                return updated
+        raise KeyError(interview_id)
 
     def add_opportunity(self, payload: dict[str, Any]) -> dict[str, Any]:
         required = ("title", "company", "source_url")
