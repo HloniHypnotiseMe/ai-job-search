@@ -15,6 +15,7 @@ PORT = int(os.getenv("CAREER_PORTAL_PORT", "8787"))
 USERNAME = os.getenv("CAREER_PORTAL_USERNAME", "")
 PASSWORD_HASH = os.getenv("CAREER_PORTAL_PASSWORD_HASH", "")
 COOKIE_SECRET = os.getenv("CAREER_PORTAL_COOKIE_SECRET", "")
+MAIL_WEBHOOK_SECRET = os.getenv("CAREER_MAIL_WEBHOOK_SECRET", "")
 
 
 def password_hash(password, salt=None):
@@ -158,6 +159,21 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
             return self.send_page(LOGIN, 401)
+
+        if path == "/api/mail/webhook":
+            raw = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            signature = self.headers.get("X-C6-Event-Signature", "")
+            expected = hmac.new(MAIL_WEBHOOK_SECRET.encode(), raw, hashlib.sha256).hexdigest() if MAIL_WEBHOOK_SECRET else ""
+            if not MAIL_WEBHOOK_SECRET or not signature or not hmac.compare_digest(signature, expected):
+                return self.send_json(401, {"error": "invalid_mail_webhook_signature"})
+            try:
+                data = json.loads(raw or b"{}")
+            except json.JSONDecodeError:
+                return self.send_json(400, {"error": "invalid_json"})
+            event_data = data.get("data") or {}
+            payload = event_data.get("payload") if isinstance(event_data, dict) else {}
+            message = payload if isinstance(payload, dict) else {}
+            return self.send_json(202, CareerService().propose_mail_signal(message))
 
         if not self._require_auth():
             return
